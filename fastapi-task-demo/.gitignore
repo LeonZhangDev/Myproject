@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Local environment / secrets
+.env
+
+# Runtime files
+task.log
+uploads/*
+!uploads/.gitkeep
+
+# Tooling
+.pytest_cache/
+.ruff_cache/

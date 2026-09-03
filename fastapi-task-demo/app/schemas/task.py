@@ -1,35 +1,40 @@
-"""Task 的 Pydantic 数据模型。
+"""Task 的 Pydantic 请求/响应模型。"""
 
-Schema 用来定义“客户端可以传什么”和“接口应该返回什么”，它不是数据库表本身。
-"""
+from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TaskCreate(BaseModel):
-    """POST /tasks 创建任务时，客户端需要提交的数据。"""
+    """POST /tasks 创建任务。"""
 
-    # Field 不只是写类型，还可以附加长度、范围等校验规则。
     title: str = Field(
         min_length=1,
         max_length=100,
     )
-
-    # str | None 表示既可以是字符串，也可以是 None。
-    # default=None 表示这个字段不传也可以。
     description: str | None = Field(
         default=None,
         max_length=500,
     )
-
     completed: bool = False
+    priority: int = Field(
+        default=1,
+        ge=1,
+        le=5,
+    )
+
+    # 可选分类名。
+    # 如果分类不存在，创建任务时会在同一个事务里先创建分类。
+    category_name: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=50,
+    )
 
 
 class TaskUpdate(BaseModel):
-    """PUT /tasks/{task_id} 更新任务时使用。"""
+    """PUT /tasks/{task_id} 更新任务。"""
 
-    # 更新接口里的字段都允许不传，
-    # 因为用户可能只想更新 title，而不是整个对象。
     title: str | None = Field(
         default=None,
         min_length=1,
@@ -40,12 +45,55 @@ class TaskUpdate(BaseModel):
         max_length=500,
     )
     completed: bool | None = None
+    priority: int | None = Field(
+        default=None,
+        ge=1,
+        le=5,
+    )
+    category_id: int | None = Field(
+        default=None,
+        ge=1,
+    )
 
 
 class TaskResponse(BaseModel):
-    """任务接口返回给客户端的数据结构。"""
+    id: int
+    title: str
+    description: str | None = None
+    completed: bool
+    priority: int
+    category_id: int | None = None
+    created_at: datetime
+
+    model_config = ConfigDict(
+        from_attributes=True,
+    )
+
+
+class TaskPageResponse(BaseModel):
+    """普通任务列表的分页响应。"""
+
+    page: int
+    page_size: int
+    total: int
+    items: list[TaskResponse]
+
+
+class TaskWithCategoryResponse(BaseModel):
+    """JOIN 查询结果。"""
 
     id: int
     title: str
     description: str | None = None
     completed: bool
+    priority: int
+    category_id: int | None = None
+    category_name: str | None = None
+    created_at: datetime
+
+
+class TaskWithCategoryPageResponse(BaseModel):
+    page: int
+    page_size: int
+    total: int
+    items: list[TaskWithCategoryResponse]
