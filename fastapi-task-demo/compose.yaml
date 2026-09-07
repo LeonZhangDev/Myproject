@@ -25,6 +25,22 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:8
+    container_name: task-redis
+    restart: unless-stopped
+
+    ports:
+      - "127.0.0.1:6379:6379"
+
+    # 这里 Redis 只做缓存与限流，不是数据真相源，所以不挂持久化 volume。
+    # Redis 重启后缓存清空没有关系，数据仍然保存在 PostgreSQL。
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
 
 volumes:
   task_pg_data:

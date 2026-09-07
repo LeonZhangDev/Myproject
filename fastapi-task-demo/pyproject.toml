@@ -2,13 +2,14 @@
 
 [project]
 name = "task-api-split"
-version = "0.2.0"
-description = "FastAPI + PostgreSQL + SQLAlchemy 异步学习项目"
+version = "0.3.0"
+description = "FastAPI + PostgreSQL + SQLAlchemy + Redis 异步学习项目"
 requires-python = ">=3.10"
 dependencies = [
     "alembic>=1.16.0",
     "asyncpg>=0.30.0",
     "fastapi[standard]>=0.141.1",
     "pydantic-settings>=2.10.0",
+    "redis>=5.2.0",
     "sqlalchemy>=2.0.40",
 ]

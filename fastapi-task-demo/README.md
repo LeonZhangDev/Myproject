@@ -1,58 +1,108 @@
-# Task API - PostgreSQL / SQLAlchemy 版
+# Task API - PostgreSQL + SQLAlchemy + Redis 版
 
-这个版本已经把原来的 `app/data/task_store.py` 内存列表替换为真正的 PostgreSQL。
-
-## 当前技术栈
+这个版本是在原来的 FastAPI Task 项目上逐步升级得到的完整学习项目：
 
 ```text
 FastAPI
-    ↓
-SQLAlchemy 2.x AsyncSession
-    ↓
-asyncpg
-    ↓
-PostgreSQL 18（Docker）
+   │
+   ├── SQLAlchemy 2.x AsyncSession
+   │        ↓
+   │     asyncpg
+   │        ↓
+   │   PostgreSQL 18（Docker）
+   │
+   └── redis.asyncio
+            ↓
+        Redis 8（Docker）
 ```
 
-数据库表结构由 Alembic 管理。
+PostgreSQL 是持久化数据的**真实来源（source of truth）**；Redis 只负责缓存和限流。Redis 清空或临时故障，不应该造成 Task 数据丢失。
 
 ---
 
-## 项目结构
+## 1. 当前功能
+
+### PostgreSQL / SQLAlchemy
+
+- Task CRUD
+- Category 关联
+- `AsyncSession`
+- 每请求独立 Session
+- 数据库事务
+- OFFSET / LIMIT 分页
+- 数据库索引
+- Task `LEFT JOIN` Category
+- Alembic 数据库迁移
+
+### Redis
+
+- `GET /tasks/{task_id}` 使用 Cache-Aside
+- 正常 Task 缓存 TTL 默认 300 秒
+- `__NULL__` 空值缓存 TTL 默认 60 秒，降低缓存穿透
+- Task 创建后清理可能存在的空值缓存
+- Task 更新后删除缓存
+- Task 删除后删除缓存
+- `/tasks` 使用 Redis 固定窗口限流
+- Lua 脚本原子执行 `INCR + EXPIRE`
+- Redis 故障采用 fail-open：核心 PostgreSQL CRUD 继续工作
+
+### 原项目保留功能
+
+- Token 校验
+- 全局异常处理
+- PDF 上传
+- BackgroundTasks
+- SSE 流式聊天
+- CORS
+- 请求日志中间件
+
+---
+
+# 2. 项目目录
 
 ```text
 task-api-split/
 ├── app/
 │   ├── main.py
+│   │
+│   ├── cache/
+│   │   ├── __init__.py
+│   │   ├── redis.py              # Redis 客户端 / 连接池
+│   │   └── task_cache.py         # Cache-Aside、空值缓存、缓存失效
+│   │
 │   ├── core/
 │   │   ├── config.py
 │   │   └── cors.py
+│   │
 │   ├── database/
-│   │   ├── base.py                 # SQLAlchemy Declarative Base
-│   │   └── session.py              # Engine、Session 工厂、get_db
+│   │   ├── base.py
+│   │   └── session.py            # Engine、Session 工厂、get_db
+│   │
+│   ├── dependencies/
+│   │   ├── auth.py
+│   │   └── rate_limit.py         # Redis Lua 固定窗口限流
+│   │
 │   ├── models/
-│   │   ├── category.py             # categories 表
-│   │   └── task.py                 # tasks 表、外键与索引
+│   │   ├── category.py
+│   │   └── task.py
+│   │
 │   ├── routers/
-│   │   ├── tasks.py                # CRUD、事务、分页、JOIN
-│   │   ├── categories.py           # Category 接口
+│   │   ├── tasks.py              # CRUD、事务、分页、JOIN、缓存失效
+│   │   ├── categories.py
 │   │   ├── files.py
 │   │   └── chat.py
+│   │
 │   ├── schemas/
-│   │   ├── task.py
-│   │   ├── category.py
-│   │   ├── common.py
-│   │   └── chat.py
-│   ├── dependencies/
 │   ├── exceptions/
 │   ├── middleware/
 │   └── services/
+│
 ├── alembic/
-│   ├── env.py
 │   └── versions/
 │       └── 20260903_01_create_task_tables.py
+│
 ├── alembic.ini
-├── compose.yaml
+├── compose.yaml                  # PostgreSQL + Redis
 ├── .env.example
 ├── pyproject.toml
 └── README.md
@@ -60,83 +110,66 @@ task-api-split/
 
 ---
 
-# 1. 准备环境变量
+# 3. 第一次启动
 
-进入项目目录：
+进入项目：
 
 ```bash
 cd task-api-split
 ```
 
-复制配置：
+复制环境变量：
 
 ```bash
 cp .env.example .env
 ```
 
-`.env` 默认内容对应：
-
-```text
-数据库：task_db
-用户：task_user
-密码：task_password
-端口：5432
-```
-
----
-
-# 2. 安装 Python 依赖
+安装 Python 依赖：
 
 ```bash
 uv sync
 ```
 
-关键依赖：
-
-```text
-sqlalchemy        ORM / SQL 构造
-asyncpg           PostgreSQL 异步驱动
-pydantic-settings 读取 .env
-alembic           数据库迁移
-```
-
----
-
-# 3. Docker 启动 PostgreSQL
+启动 PostgreSQL 和 Redis：
 
 ```bash
 docker compose up -d
 ```
 
-检查：
+查看容器：
 
 ```bash
 docker compose ps
 ```
 
-查看数据库日志：
+正常情况下应看到：
 
-```bash
-docker compose logs db
+```text
+task-postgres
+task-redis
 ```
 
 ---
 
-# 4. 用 Alembic 创建表
+# 4. 创建 PostgreSQL 表
+
+Redis 没有引入新的 PostgreSQL 表，所以仍然使用原来的 Alembic migration。
+
+执行：
 
 ```bash
 uv run alembic upgrade head
 ```
 
-这个命令会创建：
+创建：
 
 ```text
+alembic_version
 categories
 tasks
-alembic_version
 ```
 
-同时创建索引：
+以及索引：
 
 ```text
 ix_categories_name
@@ -144,11 +177,31 @@ ix_tasks_category_id
 ix_tasks_completed_priority
 ```
 
-注意：不要手工运行 `Base.metadata.create_all()`，本项目统一通过 Alembic 管理表结构。
+---
+
+# 5. 启动 FastAPI
+
+```bash
+uv run fastapi dev app/main.py
+```
+
+Swagger：
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+Task / Category 请求需要：
+
+```text
+X-Token: dev-token
+```
 
 ---
 
-# 5. 进入 PostgreSQL
+# 6. 检查 PostgreSQL
+
+进入：
 
 ```bash
 docker compose exec db \
@@ -161,7 +214,7 @@ psql -U task_user -d task_db
 \dt
 ```
 
-查看 tasks 表：
+查看 Task 表：
 
 ```sql
 \d tasks
@@ -173,7 +226,7 @@ psql -U task_user -d task_db
 \di
 ```
 
-退出 PostgreSQL：
+退出：
 
 ```sql
 \q
@@ -181,27 +234,507 @@ psql -U task_user -d task_db
 
 ---
 
-# 6. 启动 FastAPI
+# 7. 检查 Redis
+
+进入 Redis CLI：
 
 ```bash
-uv run fastapi dev app/main.py
+docker compose exec redis redis-cli
 ```
 
-Swagger：
+测试：
 
-```text
-http://127.0.0.1:8000/docs
+```redis
+PING
 ```
 
-Task / Category 请求仍需要：
+返回：
 
 ```text
-X-Token: dev-token
+PONG
+```
+
+退出：
+
+```redis
+QUIT
 ```
 
 ---
 
-# 7. 分页
+# 8. Cache-Aside：查询单个 Task
+
+接口：
+
+```http
+GET /tasks/{task_id}
+```
+
+流程：
+
+```text
+Request
+   ↓
+Redis GET task-api:task:{id}
+   │
+   ├── hit → 直接返回
+   │
+   └── miss
+         ↓
+     PostgreSQL
+         │
+         ├── 找到 → Redis SET + TTL → 返回
+         │
+         └── 不存在 → Redis SET __NULL__ + 短 TTL → 404
+```
+
+缓存代码：
+
+```text
+app/cache/task_cache.py
+```
+
+Redis Key 示例：
+
+```text
+task-api:task:1
+task-api:task:25
+```
+
+正常缓存默认：
+
+```text
+TTL = 300 秒
+```
+
+---
+
+# 9. 怎么观察缓存命中
+
+先创建一个 Task，然后第一次请求：
+
+```http
+GET /tasks/1
+```
+
+第一次：
+
+```text
+Redis miss
+    ↓
+PostgreSQL SELECT
+    ↓
+Redis SET
+```
+
+进入 Redis：
+
+```bash
+docker compose exec redis redis-cli
+```
+
+查看：
+
+```redis
+GET task-api:task:1
+```
+
+查看剩余 TTL：
+
+```redis
+TTL task-api:task:1
+```
+
+第二次再调用：
+
+```http
+GET /tasks/1
+```
+
+此时直接 Redis hit，正常情况下不需要再次执行 `SELECT Task WHERE id=1`。
+
+学习阶段 `SQL_ECHO=true`，可以从 FastAPI 终端 SQL 日志观察区别。
+
+---
+
+# 10. 空值缓存：降低缓存穿透
+
+请求一个不存在的 ID：
+
+```http
+GET /tasks/999999
+```
+
+第一次：
+
+```text
+Redis miss
+    ↓
+PostgreSQL miss
+    ↓
+Redis:
+task-api:task:999999 = __NULL__
+TTL = 60 秒
+```
+
+查看：
+
+```redis
+GET task-api:task:999999
+```
+
+得到：
+
+```text
+__NULL__
+```
+
+再次请求同一个不存在 ID：
+
+```text
+Redis hit __NULL__
+    ↓
+直接 404
+```
+
+因此短时间大量重复访问不存在 ID 时，不会每次都打 PostgreSQL。
+
+为什么空值只缓存 60 秒，而正常数据缓存 300 秒？
+
+因为这个 ID 后面有可能真的被创建。空值 TTL 太长会让新数据在一段时间内仍被误判为不存在。
+
+---
+
+# 11. 更新 / 删除后的缓存一致性
+
+本项目使用：
+
+```text
+先更新 PostgreSQL
+       ↓
+COMMIT
+       ↓
+DEL Redis Key
+```
+
+例如：
+
+```http
+PUT /tasks/1
+```
+
+成功后执行：
+
+```text
+DEL task-api:task:1
+```
+
+下一次：
+
+```http
+GET /tasks/1
+```
+
+Redis miss，于是重新读取 PostgreSQL 最新数据并重建缓存。
+
+删除 Task 同样执行：
+
+```text
+PostgreSQL DELETE
+       ↓
+COMMIT
+       ↓
+Redis DEL
+```
+
+这是 Cache-Aside 中很常见的“写数据库后使缓存失效”策略。
+
+注意：当前学习项目 Redis 删除失败时会记录日志并 fail-open，因此极端情况下旧缓存最多持续到 TTL。生产系统可以继续加入重试、消息队列或补偿任务。
+
+---
+
+# 12. 为什么创建 Task 后也 DELETE 缓存？
+
+假设有人提前请求：
+
+```text
+/tasks/100
+```
+
+数据库还没有 ID=100，于是 Redis 存：
+
+```text
+task-api:task:100 = __NULL__
+```
+
+之后 PostgreSQL 创建的新 Task 恰好得到：
+
+```text
+id = 100
+```
+
+所以创建成功后项目会执行：
+
+```text
+DEL task-api:task:100
+```
+
+防止旧的空值缓存遮住刚创建的数据。
+
+---
+
+# 13. Redis 限流
+
+所有 `/tasks` 接口统一经过：
+
+```text
+app/dependencies/rate_limit.py
+```
+
+默认规则：
+
+```text
+每个客户端
+60 秒
+最多 60 次 /tasks 请求
+```
+
+环境变量：
+
+```env
+RATE_LIMIT_REQUESTS=60
+RATE_LIMIT_WINDOW_SECONDS=60
+```
+
+Redis Key 示例：
+
+```text
+task-api:rate-limit:tasks:127.0.0.1
+```
+
+第 61 次请求会返回：
+
+```http
+HTTP 429 Too Many Requests
+```
+
+类似：
+
+```json
+{
+  "code": 42901,
+  "message": "Too many requests",
+  "data": {
+    "limit": 60,
+    "window_seconds": 60,
+    "retry_after_seconds": 23
+  }
+}
+```
+
+---
+
+# 14. 为什么限流用 Lua？
+
+错误思路：
+
+```text
+INCR key
+
+程序突然异常
+
+EXPIRE key 没执行
+```
+
+这时计数 Key 可能没有 TTL。
+
+本项目把：
+
+```text
+INCR
++
+第一次请求时 EXPIRE
+```
+
+写成 Redis Lua 脚本，由 Redis 一次原子执行。
+
+核心思路：
+
+```lua
+local current = redis.call('INCR', KEYS[1])
+
+if current == 1 then
+    redis.call('EXPIRE', KEYS[1], ARGV[1])
+end
+```
+
+---
+
+# 15. Redis 为什么不使用“每请求一个客户端”？
+
+SQLAlchemy：
+
+```text
+每请求一个 AsyncSession
+```
+
+是因为 Session 是有状态的事务工作区：
+
+```text
+Request A → Session A → Transaction A
+Request B → Session B → Transaction B
+```
+
+Redis 客户端则不同。
+
+`Redis.from_url()` 内部维护连接池，因此项目采用：
+
+```text
+整个 FastAPI 应用
+        ↓
+一个 redis_client
+        ↓
+Redis Connection Pool
+      ↙   ↓   ↘
+  connection ...
+```
+
+应用关闭时：
+
+```text
+lifespan
+   ↓
+redis_client.aclose()
+```
+
+所以可以记：
+
+```text
+SQLAlchemy Engine      应用级共享
+AsyncSession           每请求独立
+
+Redis client/pool      应用级共享
+Redis Key              按业务设计
+```
+
+---
+
+# 16. PostgreSQL 为什么仍然是真实数据源？
+
+本项目不把 Task 只存在 Redis。
+
+因为 Redis 在这里承担的是：
+
+```text
+缓存
+限流计数
+临时状态
+```
+
+真实 Task：
+
+```text
+PostgreSQL
+```
+
+因此即使执行：
+
+```bash
+docker compose restart redis
+```
+
+Redis 缓存被清空，也只是：
+
+```text
+下一次 GET 回源 PostgreSQL
+       ↓
+重新建立缓存
+```
+
+不会丢 Task。
+
+这也是 `compose.yaml` 中 Redis 不需要持久化 volume 的原因。
+
+---
+
+# 17. 为什么暂时不缓存分页列表？
+
+例如：
+
+```text
+/tasks?page=1&page_size=10
+/tasks?page=2&page_size=10
+/tasks?completed=false
+/tasks?priority=3
+```
+
+如果全部缓存，创建或更新一个 Task 后就要判断应该删除哪些列表 Key。
+
+这会产生复杂的缓存失效问题。
+
+当前项目只缓存：
+
+```text
+GET /tasks/{id}
+```
+
+因为它具有非常明确的一一对应关系：
+
+```text
+Task 17
+   ↕
+task-api:task:17
+```
+
+更新 Task 17：
+
+```text
+DEL task-api:task:17
+```
+
+简单、稳定，而且适合学习 Cache-Aside。
+
+---
+
+# 18. 数据库事务
+
+创建 Task 时：
+
+```python
+async with db.begin():
+    # 查找 / 创建 Category
+    # 创建 Task
+```
+
+正常退出：
+
+```text
+COMMIT
+```
+
+任何一步异常：
+
+```text
+ROLLBACK
+```
+
+`flush()`：
+
+```text
+把 SQL 发给 PostgreSQL，可以获得主键，但事务尚未提交
+```
+
+`commit()`：
+
+```text
+正式提交事务
+```
+
+Redis 缓存失效放在 PostgreSQL 事务成功之后执行。
+
+---
+
+# 19. PostgreSQL 分页
 
 接口：
 
@@ -209,7 +742,7 @@ X-Token: dev-token
 GET /tasks?page=1&page_size=10
 ```
 
-核心 SQLAlchemy：
+SQLAlchemy：
 
 ```python
 offset = (page - 1) * page_size
@@ -220,115 +753,16 @@ select(Task) \
     .limit(page_size)
 ```
 
-它对应数据库的：
+对应：
 
 ```sql
 OFFSET ...
 LIMIT ...
 ```
 
-响应：
-
-```json
-{
-  "page": 1,
-  "page_size": 10,
-  "total": 20,
-  "items": []
-}
-```
-
 ---
 
-# 8. 事务
-
-创建任务接口：
-
-```http
-POST /tasks
-```
-
-示例请求：
-
-```json
-{
-  "title": "学习 SQLAlchemy",
-  "description": "完成数据库部分",
-  "completed": false,
-  "priority": 2,
-  "category_name": "学习"
-}
-```
-
-`app/routers/tasks.py` 中：
-
-```python
-async with db.begin():
-    # 1. 查询分类
-    # 2. 分类不存在则 INSERT Category
-    # 3. INSERT Task
-```
-
-正常退出：
-
-```text
-COMMIT
-```
-
-任何一步抛异常：
-
-```text
-ROLLBACK
-```
-
-所以不会出现“分类创建成功，但任务创建失败后留下半条业务数据”的状态。
-
-`await db.flush()` 与 `commit` 不同：
-
-```text
-flush  = 把当前 SQL 发给数据库，可以拿到生成的主键，但事务仍可回滚
-commit = 正式提交事务
-```
-
----
-
-# 9. 索引
-
-`app/models/task.py`：
-
-```python
-category_id = mapped_column(
-    ForeignKey("categories.id"),
-    index=True,
-)
-
-__table_args__ = (
-    Index(
-        "ix_tasks_completed_priority",
-        "completed",
-        "priority",
-    ),
-)
-```
-
-当前项目有：
-
-```text
-categories.name
-    唯一索引
-
-tasks.category_id
-    单列索引
-
-tasks(completed, priority)
-    复合索引
-```
-
-索引可以减少适合查询条件下需要扫描的数据，但会增加 INSERT / UPDATE / DELETE 的维护成本，所以不是越多越好。
-
----
-
-# 10. JOIN 查询
+# 20. PostgreSQL JOIN
 
 接口：
 
@@ -336,52 +770,54 @@ tasks(completed, priority)
 GET /tasks/with-category?page=1&page_size=10
 ```
 
-SQLAlchemy：
+核心：
 
 ```python
-select(
-    Task.id,
-    Task.title,
-    Category.name.label("category_name"),
-).outerjoin(
+.outerjoin(
     Category,
     Task.category_id == Category.id,
 )
 ```
 
-对应 SQL 思路：
+对应：
 
 ```sql
-SELECT
-    tasks.id,
-    tasks.title,
-    categories.name AS category_name
+SELECT ...
 FROM tasks
 LEFT JOIN categories
     ON tasks.category_id = categories.id;
 ```
 
-这里使用 `LEFT JOIN`，所以即使 Task 没有分类，它仍然会出现在结果中，此时 `category_name = null`。
+使用 LEFT JOIN，所以没有 Category 的 Task 也能返回。
 
 ---
 
-# 11. 为什么每个请求必须使用独立 Session？
+# 21. PostgreSQL 索引
 
-`app/database/session.py`：
+当前模型包含：
 
-```python
-async def get_db():
-    async with AsyncSessionLocal() as session:
-        yield session
+```text
+categories.name
+    unique + index
+
+tasks.category_id
+    index
+
+tasks(completed, priority)
+    composite index
 ```
 
-FastAPI：
+查看：
 
-```python
-db: AsyncSession = Depends(get_db)
+```sql
+\di
 ```
 
-关系是：
+索引的本质是用额外数据结构降低合适查询场景下的数据扫描成本，但会增加存储和写操作维护成本，所以不是所有字段都应该加索引。
+
+---
+
+# 22. 为什么每个 HTTP 请求使用独立 AsyncSession？
 
 ```text
 Request A → AsyncSession A → Transaction A
@@ -389,21 +825,17 @@ Request B → AsyncSession B → Transaction B
 Request C → AsyncSession C → Transaction C
 ```
 
-而不是：
+`AsyncSession` 会维护：
 
 ```text
-Request A ─┐
-Request B ─┼→ 一个全局 AsyncSession   ×
-Request C ─┘
+事务状态
+ORM 对象状态
+当前数据库工作上下文
 ```
 
-原因有三点：
+多个并发请求共享同一个 Session 时，一个请求的 `commit()` / `rollback()` 可能干扰其他请求。
 
-1. `AsyncSession` 是有状态对象，它会维护当前事务状态与 ORM 对象状态。
-2. 多个并发请求共享同一个 Session 时，一个请求的 `commit()` / `rollback()` 可能干扰另一个请求正在进行的工作。
-3. SQLAlchemy 的并发模型要求一个并发 task 使用自己的 `AsyncSession`。
-
-但“每请求一个 Session”不代表每次都重新创建一个 PostgreSQL 物理连接。
+但独立 Session 不等于每次重新建立物理 TCP 连接：
 
 ```text
                  Engine
@@ -417,27 +849,25 @@ Request C ─┘
           Request A Request B
 ```
 
-Engine 和连接池是应用级共享的；请求结束时 Session 关闭，连接通常归还连接池供后续请求复用。
-
-因此可以记成：
+记忆：
 
 ```text
 Engine        整个应用共享
 Session       每个请求独立
-Transaction   按一次业务操作划分
+Transaction   按业务操作划分
 ```
 
 ---
 
-# 12. 当前主要接口
+# 23. 主要接口
 
 ```text
 GET     /tasks
 GET     /tasks/with-category
-GET     /tasks/{task_id}
-POST    /tasks
-PUT     /tasks/{task_id}
-DELETE  /tasks/{task_id}
+GET     /tasks/{task_id}          Redis Cache-Aside
+POST    /tasks                    PostgreSQL Transaction
+PUT     /tasks/{task_id}          DB COMMIT → Redis DEL
+DELETE  /tasks/{task_id}          DB COMMIT → Redis DEL
 
 GET     /categories
 POST    /categories
@@ -445,3 +875,41 @@ POST    /categories
 POST    /upload/pdf
 POST    /chat/stream
 ```
+
+所有 `/tasks` 接口同时经过 Redis rate limit。
+
+---
+
+# 24. 推荐学习顺序
+
+```text
+1. docker compose up -d
+
+2. docker compose ps
+
+3. uv run alembic upgrade head
+
+4. uv run fastapi dev app/main.py
+
+5. POST /tasks 创建 Task
+
+6. GET /tasks/{id} 第一次观察 PostgreSQL SELECT
+
+7. redis-cli GET task-api:task:{id}
+
+8. GET /tasks/{id} 第二次观察 Redis 命中
+
+9. PUT /tasks/{id}
+
+10. redis-cli GET task-api:task:{id}
+    应该为空，因为缓存已失效
+
+11. GET 不存在 ID
+
+12. redis-cli GET task-api:task:{不存在ID}
+    应得到 __NULL__
+
+13. 连续请求 /tasks，观察 429 限流
+```
+
+这套流程能把 PostgreSQL、SQLAlchemy、事务、Session、Redis Cache-Aside、缓存一致性、缓存穿透和限流串成一条完整的后端学习链路。

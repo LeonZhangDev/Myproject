@@ -1,11 +1,18 @@
-"""Task 相关 HTTP 路由：PostgreSQL + SQLAlchemy 异步版本。"""
+"""Task 路由：PostgreSQL 持久化 + Redis Cache-Aside / 限流。"""
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.cache.task_cache import (
+    delete_task_cache,
+    get_cached_task,
+    set_task_cache,
+    set_task_not_found_cache,
+)
 from app.database.session import get_db
 from app.dependencies.auth import verify_token
+from app.dependencies.rate_limit import rate_limit
 from app.exceptions.app_exception import AppException
 from app.models.category import Category
 from app.models.task import Task
@@ -23,6 +30,8 @@ from app.services.background import write_task_log
 router = APIRouter(
     prefix="/tasks",
     tags=["Task"],
+    # 所有 /tasks 接口统一经过 Redis 限流。
+    dependencies=[Depends(rate_limit)],
 )
 
 
@@ -46,16 +55,24 @@ def task_not_found(task_id: int) -> AppException:
             "model": ErrorResponse,
             "description": "Token 无效",
         },
+        429: {
+            "model": ErrorResponse,
+            "description": "Redis 限流触发",
+        },
     },
 )
 async def get_tasks(
-    # page 从 1 开始；page_size 最大限制 100，防止一次请求拉取过多数据。
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=10, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
     token: str = Depends(verify_token),
 ):
-    # OFFSET = (页码 - 1) * 每页数量。
+    """使用 PostgreSQL OFFSET / LIMIT 分页。
+
+    第一版不缓存分页列表，因为创建/更新任务后需要失效大量不同分页 Key，
+    缓存一致性成本明显高于单条 Task 缓存。
+    """
+
     offset = (page - 1) * page_size
 
     total = await db.scalar(
@@ -88,12 +105,10 @@ async def get_tasks_with_category(
     db: AsyncSession = Depends(get_db),
     token: str = Depends(verify_token),
 ):
-    """使用 LEFT OUTER JOIN 一次查询 Task 与 Category。
-
-    使用 LEFT JOIN 而不是 INNER JOIN，是为了让没有分类的 Task 也能返回。
-    """
+    """使用 LEFT OUTER JOIN 一次查询 Task 与 Category。"""
 
     offset = (page - 1) * page_size
+
     total = await db.scalar(
         select(func.count(Task.id))
     )
@@ -124,7 +139,6 @@ async def get_tasks_with_category(
         "page": page,
         "page_size": page_size,
         "total": total or 0,
-        # mappings() 把每一行变成类似 dict 的映射，字段名与响应模型对应。
         "items": result.mappings().all(),
     }
 
@@ -132,7 +146,11 @@ async def get_tasks_with_category(
 @router.get(
     "/{task_id}",
     response_model=TaskResponse,
-    summary="查询单个任务",
+    summary="查询单个任务（Redis Cache-Aside）",
+    description=(
+        "先查 Redis；未命中再回源 PostgreSQL 并写回缓存。"
+        "数据库不存在时写入短 TTL 的 __NULL__ 空值缓存以降低缓存穿透。"
+    ),
     responses={
         401: {
             "model": ErrorResponse,
@@ -142,6 +160,10 @@ async def get_tasks_with_category(
             "model": ErrorResponse,
             "description": "任务不存在",
         },
+        429: {
+            "model": ErrorResponse,
+            "description": "Redis 限流触发",
+        },
     },
 )
 async def get_task(
@@ -149,10 +171,33 @@ async def get_task(
     db: AsyncSession = Depends(get_db),
     token: str = Depends(verify_token),
 ):
+    # 1. 先查 Redis。
+    cache_hit, cached_task = await get_cached_task(task_id)
+
+    if cache_hit:
+        # 命中 __NULL__：此前数据库已经确认不存在，无需再次访问 PostgreSQL。
+        if cached_task is None:
+            raise task_not_found(task_id)
+
+        return cached_task
+
+    # 2. Redis miss，再查 PostgreSQL。
     task = await db.get(Task, task_id)
 
     if task is None:
+        # 3. 数据库也 miss：短 TTL 空值缓存，降低恶意/重复不存在 ID 的穿透。
+        await set_task_not_found_cache(task_id)
         raise task_not_found(task_id)
+
+    # 4. 数据库命中：把响应模型转换成 JSON 可序列化 dict 写回 Redis。
+    task_data = TaskResponse.model_validate(task).model_dump(
+        mode="json"
+    )
+
+    await set_task_cache(
+        task_id,
+        task_data,
+    )
 
     return task
 
@@ -171,6 +216,10 @@ async def get_task(
             "model": ErrorResponse,
             "description": "Token 无效",
         },
+        429: {
+            "model": ErrorResponse,
+            "description": "Redis 限流触发",
+        },
     },
 )
 async def create_task(
@@ -179,7 +228,6 @@ async def create_task(
     db: AsyncSession = Depends(get_db),
     token: str = Depends(verify_token),
 ):
-    # async with db.begin() 就是明确的事务边界。
     async with db.begin():
         category_id: int | None = None
 
@@ -196,7 +244,7 @@ async def create_task(
                 )
                 db.add(category)
 
-                # flush 会执行 INSERT 并拿到主键，但不会提交事务。
+                # flush 执行 INSERT 并拿到主键，但仍处于事务中，可以回滚。
                 await db.flush()
 
             category_id = category.id
@@ -213,8 +261,11 @@ async def create_task(
 
         task_id = task.id
 
-    # begin 正常结束后已经 COMMIT。
+    # begin 正常退出后 PostgreSQL 已 COMMIT。
     await db.refresh(task)
+
+    # 如果这个未来 ID 曾被恶意请求并写成 __NULL__，创建成功后主动清掉。
+    await delete_task_cache(task_id)
 
     background_tasks.add_task(
         write_task_log,
@@ -227,7 +278,7 @@ async def create_task(
 @router.put(
     "/{task_id}",
     response_model=TaskResponse,
-    summary="更新任务",
+    summary="更新任务并失效 Redis 缓存",
     responses={
         401: {
             "model": ErrorResponse,
@@ -236,6 +287,10 @@ async def create_task(
         404: {
             "model": ErrorResponse,
             "description": "任务或分类不存在",
+        },
+        429: {
+            "model": ErrorResponse,
+            "description": "Redis 限流触发",
         },
     },
 )
@@ -255,7 +310,6 @@ async def update_task(
             exclude_unset=True,
         )
 
-        # 如果客户端真的传了 category_id，并且不是 null，先检查外键目标是否存在。
         if "category_id" in update_data:
             category_id = update_data["category_id"]
 
@@ -278,6 +332,9 @@ async def update_task(
 
         await db.flush()
 
+    # 先保证 PostgreSQL COMMIT，再删除 Redis；下次 GET 会回源并重建缓存。
+    await delete_task_cache(task_id)
+
     await db.refresh(task)
     return task
 
@@ -285,7 +342,7 @@ async def update_task(
 @router.delete(
     "/{task_id}",
     response_model=MessageResponse,
-    summary="删除任务",
+    summary="删除任务并失效 Redis 缓存",
     responses={
         401: {
             "model": ErrorResponse,
@@ -294,6 +351,10 @@ async def update_task(
         404: {
             "model": ErrorResponse,
             "description": "任务不存在",
+        },
+        429: {
+            "model": ErrorResponse,
+            "description": "Redis 限流触发",
         },
     },
 )
@@ -309,6 +370,9 @@ async def delete_task(
             raise task_not_found(task_id)
 
         await db.delete(task)
+
+    # 数据库删除已经提交，再删除缓存，避免继续读到旧 Task。
+    await delete_task_cache(task_id)
 
     return {
         "message": "Task deleted"
