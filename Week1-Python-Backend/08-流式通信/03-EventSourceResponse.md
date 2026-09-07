@@ -20,6 +20,31 @@ status: learning
 @app.get('/stream', response_class=EventSourceResponse)
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```python
+from sse_starlette.sse import EventSourceResponse
+
+async def gen():
+    yield {"data": "hello"}
+    yield {"data": "world"}
+
+# FastAPI 路由中：
+# return EventSourceResponse(gen())
+```
+
+### 运行 / 返回结果
+
+```text
+客户端流式收到：
+data: hello
+
+data: world
+```
+
 ## 🔗 关联知识
 
 - [[04-ServerSentEvent]]

@@ -23,6 +23,29 @@ async def get_session():
         except: await s.rollback(); raise
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```python
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+```
+
+### 运行 / 返回结果
+
+```text
+请求 A -> 创建 Session A -> 使用 -> close
+请求 B -> 创建 Session B -> 使用 -> close
+```
+
+**怎么理解：** Web 请求通常一请求一个 Session，避免不同请求共享事务状态和 ORM 对象状态。
+
 ## 🔗 关联知识
 
 - [[../03-FastAPI/05-依赖注入]]

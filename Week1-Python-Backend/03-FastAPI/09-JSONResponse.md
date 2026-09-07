@@ -20,6 +20,29 @@ HTTP status_code 与业务错误码可以分开。
 return JSONResponse(status_code=404, content={'code':40401,'message':'not found'})
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```python
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+app = FastAPI()
+
+@app.get("/created")
+def created():
+    return JSONResponse(status_code=201, content={"id": 1})
+```
+
+### 运行 / 返回结果
+
+```text
+GET /created
+201 Created
+{"id":1}
+```
+
 ## 🔗 关联知识
 
 - [[08-异常处理]]

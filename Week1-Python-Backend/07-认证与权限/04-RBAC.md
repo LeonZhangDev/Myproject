@@ -21,6 +21,27 @@ Leon -> admin -> task:delete
 Bob -> viewer -> task:read
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```python
+permissions = {
+    "admin": {"read", "write", "delete"},
+    "user": {"read"},
+}
+
+role = "user"
+print("delete" in permissions[role])
+```
+
+### 运行 / 返回结果
+
+```text
+False
+```
+
 ## 🔗 关联知识
 
 - [[05-FastAPI最小权限验证]]

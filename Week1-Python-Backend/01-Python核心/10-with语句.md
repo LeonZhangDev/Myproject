@@ -21,6 +21,29 @@ async with lock:
     ...
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```python
+from pathlib import Path
+
+p = Path("demo.txt")
+with p.open("w", encoding="utf-8") as f:
+    f.write("hello")
+
+print(f.closed)
+```
+
+### 运行 / 返回结果
+
+```text
+True
+```
+
+**怎么理解：** 离开 with 后文件会自动关闭，即使中间发生异常也会执行清理逻辑。
+
 ## 🔗 关联知识
 
 - [[09-上下文管理器]]

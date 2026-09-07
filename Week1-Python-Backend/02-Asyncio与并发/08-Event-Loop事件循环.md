@@ -20,6 +20,28 @@ status: learning
 Task A --await--> Loop --> Task B
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```python
+import asyncio
+
+async def main():
+    print("事件循环正在运行")
+
+asyncio.run(main())
+```
+
+### 运行 / 返回结果
+
+```text
+事件循环正在运行
+```
+
+**怎么理解：** asyncio.run() 会创建并驱动事件循环，直到 main() 完成。
+
 ## 🔗 关联知识
 
 - [[09-阻塞调用]]

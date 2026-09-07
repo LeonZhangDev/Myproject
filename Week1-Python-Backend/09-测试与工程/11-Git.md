@@ -21,3 +21,25 @@ git status
 git add .
 git commit -m "feat: add pagination"
 ```
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```bash
+git switch -c feature/redis-cache
+git add .
+git commit -m "feat: add redis cache"
+git switch main
+git merge feature/redis-cache
+```
+
+### 运行 / 返回结果
+
+```text
+创建并切到 feature/redis-cache
+提交功能代码
+回到 main
+把 feature/redis-cache 合并进 main
+```
+

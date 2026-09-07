@@ -20,6 +20,24 @@ LIMIT/OFFSET 简单且支持跳页。
 SELECT * FROM tasks ORDER BY id DESC LIMIT 20 OFFSET 10000;
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```sql
+SELECT id, title
+FROM tasks
+ORDER BY id
+LIMIT 10 OFFSET 20;
+```
+
+### 运行 / 返回结果
+
+```text
+返回排序后的第 21～30 条记录。
+```
+
 ## 🔗 关联知识
 
 - [[18-游标分页]]

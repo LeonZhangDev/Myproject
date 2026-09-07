@@ -22,6 +22,32 @@ class TaskCreate(BaseModel):
     priority:int=1
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```python
+from pydantic import BaseModel
+
+class User(BaseModel):
+    id: int
+    name: str
+
+u = User(id="1", name="Leon")
+print(u)
+print(type(u.id))
+```
+
+### 运行 / 返回结果
+
+```text
+id=1 name='Leon'
+<class 'int'>
+```
+
+**怎么理解：** Pydantic 会按模型规则解析和校验输入。
+
 ## 🔗 关联知识
 
 - [[03-Field字段约束]]

@@ -21,6 +21,26 @@ SET task:1 value EX 300
 TTL task:1
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```bash
+redis-cli SET session:1 abc EX 60
+redis-cli GET session:1
+```
+
+### 运行 / 返回结果
+
+```text
+OK
+"abc"
+
+60 秒后再次 GET：
+(nil)
+```
+
 ## 🔗 关联知识
 
 - [[08-内存淘汰策略]]

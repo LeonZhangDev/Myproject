@@ -20,6 +20,26 @@ status: learning
 EXPLAIN SELECT * FROM tasks WHERE user_id=123;
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```sql
+EXPLAIN
+SELECT * FROM users WHERE email = 'a@test.com';
+```
+
+### 运行 / 返回结果
+
+```text
+简化理解：
+Index Scan using users_email_key on users
+  Index Cond: (email = 'a@test.com')
+```
+
+**怎么理解：** 真实输出会因 PostgreSQL 版本、数据量和统计信息而不同。
+
 ## 🔗 关联知识
 
 - [[09-EXPLAIN-ANALYZE]]

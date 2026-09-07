@@ -20,6 +20,29 @@ status: learning
 from concurrent.futures import ProcessPoolExecutor
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```python
+from concurrent.futures import ProcessPoolExecutor
+
+def calc(n):
+    return sum(i * i for i in range(n))
+
+with ProcessPoolExecutor() as pool:
+    print(pool.submit(calc, 1_000_000).result())
+```
+
+### 运行 / 返回结果
+
+```text
+333332833333500000
+```
+
+**怎么理解：** CPU 密集型工作通常更适合多进程，因为可以利用多个 CPU 核心。
+
 ## 🔗 关联知识
 
 - [[03-Python-GIL]]

@@ -21,6 +21,31 @@ async def work():
     await asyncio.sleep(1)
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```python
+import asyncio
+
+async def get_data():
+    await asyncio.sleep(0.1)
+    return "data"
+
+async def main():
+    result = await get_data()
+    print(result)
+
+asyncio.run(main())
+```
+
+### 运行 / 返回结果
+
+```text
+data
+```
+
 ## 🔗 关联知识
 
 - [[05-Coroutine]]

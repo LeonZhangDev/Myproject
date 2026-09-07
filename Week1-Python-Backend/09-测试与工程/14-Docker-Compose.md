@@ -26,6 +26,29 @@ services:
     image: redis:7
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```yaml
+services:
+  api:
+    build: .
+    ports: ["8000:8000"]
+  redis:
+    image: redis:7
+```
+
+### 运行 / 返回结果
+
+```text
+docker compose up -d
+-> 启动 api 服务
+-> 启动 redis 服务
+两个服务进入同一个 Compose 网络，可通过服务名 redis 互相访问。
+```
+
 ## 🔗 关联知识
 
 - [[12-Docker镜像与容器]]

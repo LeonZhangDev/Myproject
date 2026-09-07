@@ -21,6 +21,23 @@ HSET user:1 name Leon age 30
 HGET user:1 name
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```bash
+redis-cli HSET user:1 name Leon age 25
+redis-cli HGET user:1 name
+```
+
+### 运行 / 返回结果
+
+```text
+(integer) 2
+"Leon"
+```
+
 ## 🔗 关联知识
 
 - [[09-String]]

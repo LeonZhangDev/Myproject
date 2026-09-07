@@ -20,6 +20,30 @@ status: learning
 mock_client.get.return_value={'ok':True}
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```python
+from unittest.mock import Mock
+
+send_email = Mock(return_value=True)
+result = send_email("a@test.com")
+
+print(result)
+print(send_email.call_count)
+```
+
+### 运行 / 返回结果
+
+```text
+True
+1
+```
+
+**怎么理解：** 测试时可以用 Mock 替代真正的邮件、支付、外部 API 等依赖。
+
 ## 🔗 关联知识
 
 - [[07-dependency-overrides]]

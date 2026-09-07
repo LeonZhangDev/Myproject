@@ -20,6 +20,23 @@ Python 常用测试框架。
 pytest -q
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```python
+def test_math():
+    assert 1 + 1 == 2
+```
+
+### 运行 / 返回结果
+
+```text
+$ pytest -q
+1 passed
+```
+
 ## 🔗 关联知识
 
 - [[04-fixture]]

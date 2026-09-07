@@ -21,6 +21,24 @@ SELECT users.name,tasks.title
 FROM users LEFT JOIN tasks ON users.id=tasks.user_id;
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```sql
+SELECT u.name, t.title
+FROM users u
+JOIN tasks t ON t.user_id = u.id;
+```
+
+### 运行 / 返回结果
+
+```text
+假设 Leon 有任务 "Learn FastAPI"：
+Leon | Learn FastAPI
+```
+
 ## 🔗 关联知识
 
 - [[15-N加1问题]]

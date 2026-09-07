@@ -1,5 +1,9 @@
 # Week1 Python Backend · Obsidian Vault
 
+> [!tip] 2026-09-07 更新：知识点笔记已补充“🧪 简单例子与返回结果”
+> 重点章节（Python / asyncio / FastAPI / Pydantic / SQLAlchemy / Redis / 认证 / 流式通信 / 测试工程）现在都可以直接看到最小示例以及运行后会发生什么。
+
+
 这是一个围绕“第1周｜Python 后端与工程基础”整理的 Obsidian Markdown 项目。
 
 ## 打开方式

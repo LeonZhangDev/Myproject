@@ -20,6 +20,26 @@ status: learning
 XADD events * type task_created task_id 123
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```bash
+redis-cli XADD events 1-0 type login user 42
+redis-cli XRANGE events - +
+```
+
+### 运行 / 返回结果
+
+```text
+1) 1-0
+2) 1) "type"
+   2) "login"
+   3) "user"
+   4) "42"
+```
+
 ## 🔗 关联知识
 
 - [[18-延迟双删与消息同步]]

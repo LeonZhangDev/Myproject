@@ -20,6 +20,26 @@ status: learning
 x_token:str|None=Header(default=None)
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```text
+登录成功后服务端返回：
+access_token = "abc123"
+
+后续请求：
+Authorization: Bearer abc123
+```
+
+### 运行 / 返回结果
+
+```text
+Token 有效：200 OK
+Token 无效/过期：401 Unauthorized
+```
+
 ## 🔗 关联知识
 
 - [[03-JWT]]

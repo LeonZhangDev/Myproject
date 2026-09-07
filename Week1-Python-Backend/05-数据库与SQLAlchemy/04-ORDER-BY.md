@@ -20,6 +20,25 @@ status: learning
 ORDER BY created_at DESC,id DESC
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```sql
+SELECT name, score
+FROM users
+ORDER BY score DESC;
+```
+
+### 运行 / 返回结果
+
+```text
+Tom  | 95
+Leon | 88
+Amy  | 80
+```
+
 ## 🔗 关联知识
 
 - [[17-Offset分页]]

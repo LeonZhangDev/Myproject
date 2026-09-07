@@ -23,6 +23,27 @@ if not cached:
     await redis.set(key,json,ex=300)
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```python
+cached = r.get("user:1")
+if cached:
+    print("Redis命中")
+else:
+    print("查数据库")
+    r.set("user:1", '{"id":1}', ex=300)
+```
+
+### 运行 / 返回结果
+
+```text
+首次：查数据库
+后续缓存未过期时：Redis命中
+```
+
 ## 🔗 关联知识
 
 - [[03-缓存一致性]]

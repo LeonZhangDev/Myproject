@@ -23,6 +23,31 @@ def nums():
 for x in nums(): print(x)
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```python
+def numbers():
+    yield 1
+    yield 2
+    yield 3
+
+for x in numbers():
+    print(x)
+```
+
+### 运行 / 返回结果
+
+```text
+1
+2
+3
+```
+
+**怎么理解：** yield 每次只产出一个值，并保留函数当前执行位置。
+
 ## 🔗 关联知识
 
 - [[05-迭代器]]

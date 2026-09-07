@@ -20,6 +20,28 @@ status: learning
 app.dependency_overrides[get_session]=get_test_session
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```python
+def fake_get_user():
+    return {"id": 999}
+
+app.dependency_overrides[get_user] = fake_get_user
+r = client.get("/me")
+print(r.json())
+```
+
+### 运行 / 返回结果
+
+```text
+{'id': 999}
+```
+
+**怎么理解：** 只在测试里把真实依赖替换成 fake 依赖，不需要改业务路由代码。
+
 ## 🔗 关联知识
 
 - [[../03-FastAPI/05-依赖注入]]

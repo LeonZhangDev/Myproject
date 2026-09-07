@@ -23,6 +23,33 @@ def check(self):
     return self
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```python
+from pydantic import BaseModel, model_validator
+
+class Range(BaseModel):
+    start: int
+    end: int
+
+    @model_validator(mode="after")
+    def check_order(self):
+        if self.end < self.start:
+            raise ValueError("end must >= start")
+        return self
+
+print(Range(start=1, end=3))
+```
+
+### 运行 / 返回结果
+
+```text
+start=1 end=3
+```
+
 ## 🔗 关联知识
 
 - [[05-field-validator]]

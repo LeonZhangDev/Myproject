@@ -20,6 +20,25 @@ status: learning
 # avoid: gather(do_a(session), do_b(session))
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```python
+result = await db.execute(
+    select(User).where(User.id == 1)
+)
+user = result.scalar_one()
+print(user.id)
+```
+
+### 运行 / 返回结果
+
+```text
+1
+```
+
 ## 🔗 关联知识
 
 - [[12-Session生命周期]]

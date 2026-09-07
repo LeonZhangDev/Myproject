@@ -20,6 +20,23 @@ status: learning
 request -> route -> external API / DB / Redis -> response
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```text
+现象：/chat P95 从 200ms 变成 2s
+排查：request-id 日志 -> DB 慢查询 -> EXPLAIN ANALYZE
+```
+
+### 运行 / 返回结果
+
+```text
+定位到：某 SQL 发生 Seq Scan，耗时占大头
+优化索引/查询后再 benchmark，确认 P95 是否下降。
+```
+
 ## 🔗 关联知识
 
 - [[09-日志]]

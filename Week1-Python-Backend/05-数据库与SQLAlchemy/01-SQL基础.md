@@ -20,6 +20,29 @@ SQL 声明你要读写关系数据库中的什么数据。
 SELECT id,title FROM tasks WHERE done=false ORDER BY id DESC;
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```sql
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR(50)
+);
+
+INSERT INTO users(id, name) VALUES (1, 'Leon');
+SELECT * FROM users;
+```
+
+### 运行 / 返回结果
+
+```text
+id | name
+----+------
+  1 | Leon
+```
+
 ## 🔗 关联知识
 
 - [[02-WHERE]]

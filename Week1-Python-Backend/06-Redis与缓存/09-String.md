@@ -21,6 +21,25 @@ INCR page:view
 SET request:123 done NX EX 60
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```bash
+redis-cli SET counter 10
+redis-cli INCR counter
+redis-cli GET counter
+```
+
+### 运行 / 返回结果
+
+```text
+OK
+(integer) 11
+"11"
+```
+
 ## 🔗 关联知识
 
 - [[14-幂等键]]

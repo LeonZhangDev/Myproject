@@ -20,6 +20,26 @@ status: learning
 if redis_token == my_token: delete lock
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```lua
+if redis.call("get", KEYS[1]) == ARGV[1] then
+    return redis.call("del", KEYS[1])
+else
+    return 0
+end
+```
+
+### 运行 / 返回结果
+
+```text
+当前锁值 == 自己的 token：返回 1，删除成功
+token 不匹配：返回 0，不删除别人的锁
+```
+
 ## 🔗 关联知识
 
 - [[15-分布式锁]]

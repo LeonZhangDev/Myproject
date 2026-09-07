@@ -22,6 +22,27 @@ data: {"content":"你"}
 
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```text
+data: hello
+
+data: world
+```
+
+### 运行 / 返回结果
+
+```text
+浏览器依次收到两个 SSE 消息：
+hello
+world
+```
+
+**怎么理解：** SSE 每条事件以空行分隔，典型字段是 data:。
+
 ## 🔗 关联知识
 
 - [[03-EventSourceResponse]]

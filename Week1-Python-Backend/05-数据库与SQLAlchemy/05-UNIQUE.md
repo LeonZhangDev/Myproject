@@ -20,6 +20,28 @@ status: learning
 CREATE UNIQUE INDEX uq_users_email ON users(email);
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```sql
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE
+);
+
+INSERT INTO users(email) VALUES ('a@test.com');
+INSERT INTO users(email) VALUES ('a@test.com');
+```
+
+### 运行 / 返回结果
+
+```text
+第一次 INSERT：成功
+第二次 INSERT：失败，duplicate key / unique constraint violation
+```
+
 ## 🔗 关联知识
 
 - [[../04-Pydantic/10-Pydantic与数据库约束]]

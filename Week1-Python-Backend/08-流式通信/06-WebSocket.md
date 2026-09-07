@@ -20,6 +20,29 @@ status: learning
 Client <====> Server
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```python
+from fastapi import FastAPI, WebSocket
+app = FastAPI()
+
+@app.websocket("/ws")
+async def ws(websocket: WebSocket):
+    await websocket.accept()
+    msg = await websocket.receive_text()
+    await websocket.send_text("echo:" + msg)
+```
+
+### 运行 / 返回结果
+
+```text
+客户端发送：ping
+客户端收到：echo:ping
+```
+
 ## 🔗 关联知识
 
 - [[07-SSE-vs-WebSocket]]

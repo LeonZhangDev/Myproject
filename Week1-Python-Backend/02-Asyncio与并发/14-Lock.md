@@ -22,6 +22,39 @@ async with lock:
     ...
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```python
+import asyncio
+
+counter = 0
+lock = asyncio.Lock()
+
+async def add_one():
+    global counter
+    async with lock:
+        old = counter
+        await asyncio.sleep(0)
+        counter = old + 1
+
+async def main():
+    await asyncio.gather(*(add_one() for _ in range(100)))
+    print(counter)
+
+asyncio.run(main())
+```
+
+### 运行 / 返回结果
+
+```text
+100
+```
+
+**怎么理解：** Lock 保证同一时刻只有一个协程进入临界区。
+
 ## 🔗 关联知识
 
 - [[13-竞态条件]]

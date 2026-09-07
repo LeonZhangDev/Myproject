@@ -20,6 +20,27 @@ status: learning
 nickname:str|None=None
 ```
 
+
+## 🧪 简单例子与返回结果
+
+### 例子
+
+```python
+from pydantic import BaseModel
+
+class User(BaseModel):
+    name: str
+    age: int | None = None
+
+print(User(name="Leon"))
+```
+
+### 运行 / 返回结果
+
+```text
+name='Leon' age=None
+```
+
 ## 🔗 关联知识
 
 - [[01-BaseModel]]
