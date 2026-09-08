@@ -14,6 +14,24 @@ status: learning
 
 SSE 能很好承载这种 Server -> Client 流。
 
+## 🧠 完整理解
+
+### 我会先这样理解
+
+LLM 流式输出的目标不是让模型总计算时间一定变短，而是降低用户感知的首 token 延迟，让生成中的内容持续可见。后端通常从模型 API/vLLM 收到增量 token，再立即转成 SSE/chunk 发给前端。完整链路还要处理客户端断开、上游取消、usage、finish_reason 和最终落库。
+
+### 执行顺序 / 思考顺序
+
+用户请求 → 后端调用 LLM stream=true → 上游返回增量 chunk → 后端解析 delta → 立即 yield SSE token → 前端追加渲染 → finish_reason/done → 后端汇总完整答案、记录 usage/落库 → 关闭流。
+
+### 容易踩的坑
+
+不要每个 token 都同步写一次数据库，会严重放大 I/O；通常内存累积后结束时落一次。客户端断开后如果不取消上游生成，会浪费 GPU/token 成本。
+
+### 面试时我会这样说
+
+> 我做 LLM stream 会分两条线：一条是 token 尽快往前端发，另一条是后台累积完整回答，结束后一次落库。客户端如果断开，我还会尽量把上游生成一起取消，不让 GPU 继续白算。
+
 ## 最小代码 / 场景
 
 ```python
