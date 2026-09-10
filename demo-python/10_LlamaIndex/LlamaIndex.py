@@ -1,7 +1,9 @@
-from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
+from pathlib import Path
+from llama_index.core import SimpleDirectoryReader
 
-documents = SimpleDirectoryReader("data").load_data()
-index = VectorStoreIndex.from_documents(documents)
-query_engine = index.as_query_engine()
-response = query_engine.query("Some question about the data should go here")
-print(response)
+BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = BASE_DIR / "data"
+
+documents = SimpleDirectoryReader(str(DATA_DIR)).load_data()
+
+print(documents)
