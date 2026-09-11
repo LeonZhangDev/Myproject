@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "RAG_基础知识.md",
+                "file": "问题和解决/9.9 这几天问题汇总.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "RAG_基础知识"
+              "title": "9.9 这几天问题汇总"
             }
           }
         ]
@@ -188,9 +188,12 @@
       "bases:新建数据库": false
     }
   },
-  "active": "ae2dfe69cba03fd2",
+  "active": "3f897c3985bca7c4",
   "lastOpenFiles": [
+    "日报/9.10 日报.md",
+    "问题和解决/9.9 这几天问题汇总.md",
     "日报/9.9日报.md",
+    "RAG_基础知识.md",
     "大模型/RAG的优化-参考.pdf",
     "AI_interview/02-RAG与向量检索.md",
     "技术方案/RAG用户输入方案与具体实现_精简技术报告.md",
@@ -218,14 +221,12 @@
     "RAG用户输入方案与具体实现_详细工程版.md",
     "用户输入侧 RAG Query Intelligence 技术方案报告（2026-09）.md",
     "大模型生成内容的来源引用与可验证 Citation 技术报告.md",
-    "RAG_基础知识.md",
     "AI_interview/01-大模型基础.md",
     "AI_interview/00-题库首页.md",
     "03-RAG与向量检索.md",
     "AI_interview/03-RAG与向量检索.md",
     "日报/9.8日报.md",
     "日报/9.7日报.md",
-    "问题和解决/9.8 遇到uv环境问题.md",
     "c3e5eafc-6086-4bf1-a547-48656ffa8796.png",
     "ChatGPT Image 2026年9月8日 15_43_26.png",
     "ChatGPT Image 2026年9月8日 15_29_06.png",
