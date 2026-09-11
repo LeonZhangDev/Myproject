@@ -13,15 +13,44 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "问题和解决/9.9 这几天问题汇总.md",
+                "file": "问题和解决/2026-09-11_今日问题总结.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "9.9 这几天问题汇总"
+              "title": "2026-09-11_今日问题总结"
+            }
+          },
+          {
+            "id": "d8eca0803743db96",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "AI_interview/W1 面试参考答案.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "W1 面试参考答案"
+            }
+          },
+          {
+            "id": "3d077ec8be90fea6",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "日报/9.11 日报.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "9.11 日报"
             }
           }
-        ]
+        ],
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -185,17 +214,42 @@
       "daily-notes:打开/创建今天的日记": false,
       "templates:插入模板": false,
       "command-palette:打开命令面板": false,
-      "bases:新建数据库": false
+      "bases:新建数据库": false,
+      "obsidian-git:Open Git source control": false
     }
   },
-  "active": "3f897c3985bca7c4",
+  "active": "3d077ec8be90fea6",
   "lastOpenFiles": [
-    "日报/9.10 日报.md",
-    "问题和解决/9.9 这几天问题汇总.md",
+    "问题和解决/2026-09-11_今日问题总结.md",
+    "问题和解决/9.10 这几天问题汇总.md",
+    "AI_interview/第1周面试题答案.md",
+    "AI_interview/W1 面试参考答案.md",
+    "问题和解决/BaziMiao项目问题总结.md",
+    "BaziMiao项目问题总结.md",
+    "DEV_SETUP_TROUBLESHOOTING.md",
+    "日报/9.11 日报.md",
+    "AI_interview/atlassplit-interview-complete.pdf",
+    "AI_interview/Python_FastAPI_后端面试40题_完整参考答案.md.crdownload",
+    "RAG用户输入处理_10个面试问题与完整参考答案.md",
+    "RAG用户输入处理_10个面试问题与完整参考答案.md.crdownload",
+    "未命名.base",
+    "来源引用_10道高频面试题与完整参考答案.md",
+    "来源引用_10道高频面试题与完整参考答案.md.crdownload",
+    "2026-09-11_今日问题总结.md",
+    "AnythingLLMDesktop.exe",
+    "AI_interview/02-RAG与向量检索.md",
+    "AI_interview/01-大模型基础.md",
+    "问题和解决/9.11 这几天问题汇总.md",
+    "PPO_DPO_GRPO_中文面试速记.md",
+    "问题和解决/9.8 遇到uv环境问题.md",
+    "日报/9.8日报.md",
     "日报/9.9日报.md",
+    "日报/9.10日报.md",
+    "Pasted image 20260911093127.png",
+    "Pasted image 20260911093120.png",
+    "AI_interview/MindTrip_面试问题全集-Agent扩展版.pdf",
     "RAG_基础知识.md",
     "大模型/RAG的优化-参考.pdf",
-    "AI_interview/02-RAG与向量检索.md",
     "技术方案/RAG用户输入方案与具体实现_精简技术报告.md",
     "ChatGPT Image 2026年9月10日 15_37_10.png",
     "ChatGPT Image 2026年9月10日 15_37_10.png.crdownload",
@@ -204,37 +258,13 @@
     "张坤_AI算法工程师_简历_仿上传文档样式_含个人信息.md",
     "张坤_AI算法工程师_简历_仿上传文档样式_含个人信息.md.crdownload",
     "张坤_AI算法工程师_简历_仿上传文档样式.md",
-    "张坤_AI算法工程师_简历_仿上传文档样式.md.crdownload",
     "张坤_AI算法工程师_简历_无工作经历_完整版.md",
-    "张坤_AI算法工程师_简历_无工作经历_完整版.md.crdownload",
-    "~$_AI算法工程师_简历_教育完整版_美化版 (1).docx",
-    "张坤_AI算法工程师_简历_教育完整版_美化版 (1).docx",
-    "未确认 386127.crdownload",
-    "技术方案/大模型来源引用方案与具体实现.md",
-    "~$_AI算法工程师_简历_无工作经历.docx",
-    "张坤_AI算法工程师_简历_无工作经历.docx",
-    "问题和解决/9.7 遇到的GIT问题.md",
-    "大模型来源引用方案与具体实现.md",
-    "大模型来源引用_Citation_RAG_详细实现方案.md",
-    "RAG用户输入方案与具体实现_精简技术报告.md",
-    "大模型来源引用方案_详细实现版.md",
-    "RAG用户输入方案与具体实现_详细工程版.md",
-    "用户输入侧 RAG Query Intelligence 技术方案报告（2026-09）.md",
-    "大模型生成内容的来源引用与可验证 Citation 技术报告.md",
-    "AI_interview/01-大模型基础.md",
-    "AI_interview/00-题库首页.md",
-    "03-RAG与向量检索.md",
-    "AI_interview/03-RAG与向量检索.md",
-    "日报/9.8日报.md",
-    "日报/9.7日报.md",
     "c3e5eafc-6086-4bf1-a547-48656ffa8796.png",
     "ChatGPT Image 2026年9月8日 15_43_26.png",
     "ChatGPT Image 2026年9月8日 15_29_06.png",
     "大模型/1图像基础.assets/51d0f78983d.png",
     "大模型/media/彩色.png",
     "大模型/media/v2-b02d362ad1979d6a1bd91bd9fb625472_r.jpg",
-    "大模型/media/v2-84d9555380216b6e26af53cea814b024_r.jpg",
-    "大模型/media/QQ20250606-202227.png",
-    "大模型/media/QQ20250606-190538.png"
+    "大模型/media/v2-84d9555380216b6e26af53cea814b024_r.jpg"
   ]
 }

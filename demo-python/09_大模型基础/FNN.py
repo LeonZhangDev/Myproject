@@ -11,8 +11,8 @@ class FNN(nn.Module):
         self.relu = nn.ReLu()
     
     def forwar(self, x):
-        x = self.relu(self.fc1)
-        x = self.relu(self.fc2)
+        x = self.relu(self.fc1(x))
+        x = self.relu(self.fc2(x))
         x = self.fc3(x)
         
         return x
